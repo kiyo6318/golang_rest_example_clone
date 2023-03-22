@@ -83,17 +83,17 @@ func run(ctx context.Context) int {
 		}
 
 		// services
-		services := service.NewServices(repositories)
+		services := service.NewService(repositories)
 
 		// Template
-		templates, err := template.NewTemplates()
+		templates := template.NewTemplate()
 
 		registry := handler.NewHandler(logger, repositories, services, templates, version.Version)
-		httpServer := server.NewServer(cfg, registry)
+		httpServer := server.NewServer(registry, &server.Config{Log: logger}, cfg)
 		wg, ctx := errgroup.WithContext(ctx)
 		wg.Go(func() error {
-			return httpServer.Run(ctx, listener)
-		}
+			return httpServer.Serve(listener)
+		})
 
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
@@ -112,4 +112,4 @@ func run(ctx context.Context) int {
 		}
 
 		return exitOK
-
+	}
